@@ -7,25 +7,27 @@
 //
 
 import Foundation
-import Photos
 import Stevia
+import Photos
 
 protocol ImagePickerDelegate: AnyObject {
     func noPhotos()
+    func shouldAddToSelection(indexPath: IndexPath, numSelections: Int) -> Bool
 }
 
 open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
+    
     let albumsManager = YPAlbumsManager()
     var shouldHideStatusBar = false
     var initialStatusBarHidden = false
     weak var imagePickerDelegate: ImagePickerDelegate?
     
-    open override var prefersStatusBarHidden: Bool {
+    override open var prefersStatusBarHidden: Bool {
         return (shouldHideStatusBar || initialStatusBarHidden) && YPConfig.hidesStatusBar
     }
     
     /// Private callbacks to YPImagePicker
-    public var didClose: (() -> Void)?
+    public var didClose:(() -> Void)?
     public var didSelectItems: (([YPMediaItem]) -> Void)?
     
     enum Mode {
@@ -44,7 +46,7 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
     
     open override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         view.backgroundColor = YPConfig.colors.safeAreaBackgroundColor
         
         delegate = self
@@ -65,7 +67,7 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
             cameraVC = YPCameraVC()
             cameraVC?.didCapturePhoto = { [weak self] img in
                 self?.didSelectItems?([YPMediaItem.photo(p: YPMediaPhoto(image: img,
-                                                                         fromCamera: true))])
+                                                                        fromCamera: true))])
             }
         }
         
@@ -74,9 +76,9 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
             videoVC = YPVideoCaptureVC()
             videoVC?.didCaptureVideo = { [weak self] videoURL in
                 self?.didSelectItems?([YPMediaItem
-                        .video(v: YPMediaVideo(thumbnail: thumbnailFromVideoPath(videoURL),
-                                               videoURL: videoURL,
-                                               fromCamera: true))])
+                    .video(v: YPMediaVideo(thumbnail: thumbnailFromVideoPath(videoURL),
+                                           videoURL: videoURL,
+                                           fromCamera: true))])
             }
         }
         
@@ -137,7 +139,7 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
         }
     }
     
-    internal func pagerScrollViewDidScroll(_ scrollView: UIScrollView) {}
+    internal func pagerScrollViewDidScroll(_ scrollView: UIScrollView) { }
     
     func modeFor(vc: UIViewController) -> Mode {
         switch vc {
@@ -170,7 +172,7 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
         } else if let videoVC = vc as? YPVideoCaptureVC {
             videoVC.start()
         }
-        
+    
         updateUI()
     }
     
@@ -211,14 +213,9 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
         
         let label = UILabel()
         label.text = aTitle
-        // Use standard font by default.
-        label.font = UIFont.boldSystemFont(ofSize: 17)
-        
-        // Use custom font if set by user.
-        if let navBarTitleFont = UINavigationBar.appearance().titleTextAttributes?[.font] as? UIFont {
-            // Use custom font if set by user.
-            label.font = navBarTitleFont
-        }
+        // Use YPConfig font
+        label.font = YPConfig.fonts.pickerTitleFont
+
         // Use custom textColor if set by user.
         if let navBarTitleColor = UINavigationBar.appearance().titleTextAttributes?[.foregroundColor] as? UIColor {
             label.textColor = navBarTitleColor
@@ -263,26 +260,26 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
     }
     
     func updateUI() {
-        // Update Nav Bar state.
-        let cancelButton = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(close))
-        cancelButton.setTitleTextAttributes([
-            NSAttributedString.Key.foregroundColor: UIColor(red: 51 / 255.0, green: 51 / 255.0, blue: 51 / 255.0, alpha: 1.0)
-        ], for: .normal)
-        
-        let doneButton = UIBarButtonItem(title: "Done", style: .plain, target: self, action: #selector(done))
-        doneButton.setTitleTextAttributes([
-            NSAttributedString.Key.foregroundColor: UIColor(red: 59 / 255.0, green: 142 / 255.0, blue: 243 / 255.0, alpha: 1.0)
-        ], for: .normal)
-        
-        navigationItem.leftBarButtonItem = cancelButton
-        
+		if !YPConfig.hidesCancelButton {
+			// Update Nav Bar state.
+			navigationItem.leftBarButtonItem = UIBarButtonItem(title: YPConfig.wordings.cancel,
+                                                           style: .plain,
+                                                           target: self,
+                                                           action: #selector(close))
+		}
         switch mode {
         case .library:
             setTitleViewWithTitle(aTitle: libraryVC?.title ?? "")
-            navigationItem.rightBarButtonItem = doneButton
-            
+            navigationItem.rightBarButtonItem = UIBarButtonItem(title: YPConfig.wordings.next,
+                                                                style: .done,
+                                                                target: self,
+                                                                action: #selector(done))
+            navigationItem.rightBarButtonItem?.tintColor = YPConfig.colors.tintColor
+
             // Disable Next Button until minNumberOfItems is reached.
-            navigationItem.rightBarButtonItem?.isEnabled = libraryVC!.selection.count >= YPConfig.library.minNumberOfItems
+            navigationItem.rightBarButtonItem?.isEnabled =
+				libraryVC!.selection.count >= YPConfig.library.minNumberOfItems
+
         case .camera:
             navigationItem.titleView = nil
             title = cameraVC?.title
@@ -292,6 +289,10 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
             title = videoVC?.title
             navigationItem.rightBarButtonItem = nil
         }
+
+        navigationItem.rightBarButtonItem?.setFont(font: YPConfig.fonts.rightBarButtonFont, forState: .normal)
+        navigationItem.rightBarButtonItem?.setFont(font: YPConfig.fonts.rightBarButtonFont, forState: .disabled)
+        navigationItem.leftBarButtonItem?.setFont(font: YPConfig.fonts.leftBarButtonFont, forState: .normal)
     }
     
     @objc
@@ -300,7 +301,7 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
         if let libraryVC = libraryVC {
             libraryVC.mediaManager.forseCancelExporting()
         }
-        didClose?()
+        self.didClose?()
     }
     
     // When pressing "Next"
@@ -314,7 +315,7 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
                     self?.didSelectItems?([YPMediaItem.photo(p: photo)])
                 }, videoCallback: { video in
                     self?.didSelectItems?([YPMediaItem
-                            .video(v: video)])
+                        .video(v: video)])
                 }, multipleItemsCallback: { items in
                     self?.didSelectItems?(items)
                 })
@@ -330,6 +331,7 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
 }
 
 extension YPPickerVC: YPLibraryViewDelegate {
+    
     public func libraryViewDidTapNext() {
         libraryVC?.isProcessing = true
         DispatchQueue.main.async {
@@ -340,7 +342,8 @@ extension YPPickerVC: YPLibraryViewDelegate {
     }
     
     public func libraryViewStartedLoadingImage() {
-        libraryVC?.isProcessing = true // TODO: remove to enable changing selection while loading but needs cancelling previous image requests.
+		//TODO remove to enable changing selection while loading but needs cancelling previous image requests.
+        libraryVC?.isProcessing = true
         DispatchQueue.main.async {
             self.libraryVC?.v.fadeInLoader()
         }
@@ -367,8 +370,12 @@ extension YPPickerVC: YPLibraryViewDelegate {
     }
     
     public func noPhotosForOptions() {
-        dismiss(animated: true) {
+        self.dismiss(animated: true) {
             self.imagePickerDelegate?.noPhotos()
         }
+    }
+    
+    public func libraryViewShouldAddToSelection(indexPath: IndexPath, numSelections: Int) -> Bool {
+        return imagePickerDelegate?.shouldAddToSelection(indexPath: indexPath, numSelections: numSelections) ?? true
     }
 }

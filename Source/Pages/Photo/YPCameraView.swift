@@ -6,11 +6,10 @@
 //  Copyright © 2015 Yummypets. All rights reserved.
 //
 
-import UIKit
 import Stevia
+import UIKit
 
-class YPCameraView: UIView, UIGestureRecognizerDelegate {
-    
+internal class YPCameraView: UIView, UIGestureRecognizerDelegate {
     let focusView = UIView(frame: CGRect(x: 0, y: 0, width: 90, height: 90))
     let previewViewContainer = UIView()
     let buttonsContainer = UIView()
@@ -22,7 +21,7 @@ class YPCameraView: UIView, UIGestureRecognizerDelegate {
 
     convenience init(overlayView: UIView? = nil) {
         self.init(frame: .zero)
-        
+
         if let overlayView = overlayView {
             // View Hierarchy
             sv(
@@ -49,33 +48,33 @@ class YPCameraView: UIView, UIGestureRecognizerDelegate {
                 )
             )
         }
-        
+
         // Layout
         let isIphone4 = UIScreen.main.bounds.height == 480
         let sideMargin: CGFloat = isIphone4 ? 20 : 0
         if YPConfig.onlySquareImagesFromCamera {
             layout(
                 0,
-                |-sideMargin-previewViewContainer-sideMargin-|,
+                |-sideMargin - previewViewContainer - sideMargin-|,
                 -2,
                 |progressBar|,
                 0,
                 |buttonsContainer|,
                 0
             )
-            
+
             previewViewContainer.heightEqualsWidth()
         } else {
             layout(
                 0,
-                |-sideMargin-previewViewContainer-sideMargin-|,
+                |-sideMargin - previewViewContainer - sideMargin-|,
                 -2,
                 |progressBar|,
                 0
             )
-            
+
             previewViewContainer.fillContainer()
-            
+
             buttonsContainer.fillHorizontally()
             buttonsContainer.height(100)
             buttonsContainer.Bottom == previewViewContainer.Bottom - 50
@@ -83,15 +82,15 @@ class YPCameraView: UIView, UIGestureRecognizerDelegate {
 
         overlayView?.followEdges(previewViewContainer)
 
-        |-(15+sideMargin)-flashButton.size(42)
+        |-(15 + sideMargin) - flashButton.size(42)
         flashButton.Bottom == previewViewContainer.Bottom - 15
 
-        flipButton.size(42)-(15+sideMargin)-|
+        flipButton.size(42) - (15 + sideMargin)-|
         flipButton.Bottom == previewViewContainer.Bottom - 15
-        
-        timeElapsedLabel-(15+sideMargin)-|
+
+        timeElapsedLabel - (15 + sideMargin)-|
         timeElapsedLabel.Top == previewViewContainer.Top + 15
-        
+
         shotButton.centerVertically()
         shotButton.size(84).centerHorizontally()
 

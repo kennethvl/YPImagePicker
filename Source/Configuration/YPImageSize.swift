@@ -6,8 +6,8 @@
 //  Copyright © 2016 Yummypets. All rights reserved.
 //
 
-import Foundation
 import AVFoundation
+import Foundation
 
 public enum YPImageSize {
     case original

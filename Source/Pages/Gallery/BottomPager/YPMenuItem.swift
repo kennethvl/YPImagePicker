@@ -6,40 +6,39 @@
 //  Copyright © 2016 Yummypets. All rights reserved.
 //
 
-import UIKit
 import Stevia
+import UIKit
 
 final class YPMenuItem: UIView {
-    
     var textLabel = UILabel()
     var button = UIButton()
-    
+
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         setup()
     }
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setup()
     }
-    
+
     convenience init() {
         self.init(frame: .zero)
     }
-    
+
     func setup() {
         backgroundColor = YPImagePickerConfiguration.shared.colors.bottomMenuItemBackgroundColor
-        
+
         sv(
             textLabel,
             button
         )
-        
+
         textLabel.centerInContainer()
-        |-(10)-textLabel-(10)-|
+        |-10 - textLabel - (10)-|
         button.fillContainer()
-        
+
         textLabel.style { l in
             l.textAlignment = .center
             l.font = YPConfig.fonts.menuItemFont
@@ -52,7 +51,7 @@ final class YPMenuItem: UIView {
     func select() {
         textLabel.textColor = YPImagePickerConfiguration.shared.colors.bottomMenuItemSelectedTextColor
     }
-    
+
     func deselect() {
         textLabel.textColor = YPImagePickerConfiguration.shared.colors.bottomMenuItemUnselectedTextColor
     }

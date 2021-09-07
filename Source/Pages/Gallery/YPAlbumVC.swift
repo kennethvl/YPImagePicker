@@ -6,33 +6,32 @@
 //  Copyright © 2017 Yummypets. All rights reserved.
 //
 
-import UIKit
-import Stevia
 import Photos
+import Stevia
+import UIKit
 
 class YPAlbumVC: UIViewController {
-    
     override var prefersStatusBarHidden: Bool {
-         return YPConfig.hidesStatusBar
+        return YPConfig.hidesStatusBar
     }
-    
+
     var didSelectAlbum: ((YPAlbum) -> Void)?
     var albums = [YPAlbum]()
     let albumsManager: YPAlbumsManager
-    
+
     let v = YPAlbumView()
     override func loadView() { view = v }
-    
+
     required init(albumsManager: YPAlbumsManager) {
         self.albumsManager = albumsManager
         super.init(nibName: nil, bundle: nil)
         title = YPConfig.wordings.albumsTitle
     }
-    
-    required init?(coder aDecoder: NSCoder) {
+
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: YPConfig.wordings.cancel,
@@ -40,10 +39,14 @@ class YPAlbumVC: UIViewController {
                                                            target: self,
                                                            action: #selector(close))
         navigationItem.leftBarButtonItem?.setFont(font: YPConfig.fonts.leftBarButtonFont, forState: .normal)
+        navigationController?.navigationBar.titleTextAttributes = [.font: YPConfig.fonts.navigationBarTitleFont,
+                                                                   .foregroundColor: YPConfig.colors.albumTitleColor]
+        navigationController?.navigationBar.barTintColor = YPConfig.colors.albumBarTintColor
+        navigationController?.navigationBar.tintColor = YPConfig.colors.albumTintColor
         setUpTableView()
         fetchAlbumsInBackground()
     }
-    
+
     func fetchAlbumsInBackground() {
         v.spinner.startAnimating()
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -55,12 +58,12 @@ class YPAlbumVC: UIViewController {
             }
         }
     }
-    
+
     @objc
     func close() {
         dismiss(animated: true, completion: nil)
     }
-    
+
     func setUpTableView() {
         v.tableView.isHidden = true
         v.tableView.dataSource = self
@@ -73,11 +76,10 @@ class YPAlbumVC: UIViewController {
 }
 
 extension YPAlbumVC: UITableViewDataSource {
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_: UITableView, numberOfRowsInSection _: Int) -> Int {
         return albums.count
     }
-    
+
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let album = albums[indexPath.row]
         if let cell = tableView.dequeueReusableCell(withIdentifier: "AlbumCell", for: indexPath) as? YPAlbumCell {
@@ -92,8 +94,7 @@ extension YPAlbumVC: UITableViewDataSource {
 }
 
 extension YPAlbumVC: UITableViewDelegate {
-    
-    public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    public func tableView(_: UITableView, didSelectRowAt indexPath: IndexPath) {
         didSelectAlbum?(albums[indexPath.row])
     }
 }

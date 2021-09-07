@@ -6,37 +6,36 @@
 //  Copyright © 2015 Yummypets. All rights reserved.
 //
 
-import UIKit
 import Stevia
+import UIKit
 
 class YPMultipleSelectionIndicator: UIView {
-    
     let circle = UIView()
     let label = UILabel()
     var selectionColor = UIColor.ypSystemBlue
 
     convenience init() {
         self.init(frame: .zero)
-        
+
         let size: CGFloat = 20
-        
+
         sv(
             circle,
             label
         )
-        
+
         circle.fillContainer()
         circle.size(size)
         label.fillContainer()
-        
+
         circle.layer.cornerRadius = size / 2.0
         label.textAlignment = .center
         label.textColor = .white
         label.font = YPConfig.fonts.multipleSelectionIndicatorFont
-        
+
         set(number: nil)
     }
-    
+
     func set(number: Int?) {
         label.isHidden = (number == nil)
         if let number = number {
@@ -54,17 +53,16 @@ class YPMultipleSelectionIndicator: UIView {
 }
 
 class YPLibraryViewCell: UICollectionViewCell {
-    
     var representedAssetIdentifier: String!
     let imageView = UIImageView()
     let durationLabel = UILabel()
     let selectionOverlay = UIView()
     let multipleSelectionIndicator = YPMultipleSelectionIndicator()
-    
-    required init?(coder aDecoder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    required init?(coder _: NSCoder) { fatalError("init(coder:) has not been implemented") }
     override init(frame: CGRect) {
         super.init(frame: frame)
-        
+
         sv(
             imageView,
             durationLabel,
@@ -75,15 +73,15 @@ class YPLibraryViewCell: UICollectionViewCell {
         imageView.fillContainer()
         selectionOverlay.fillContainer()
         layout(
-            durationLabel-5-|,
+            durationLabel - 5-|,
             5
         )
-        
+
         layout(
             3,
-            multipleSelectionIndicator-3-|
+            multipleSelectionIndicator - 3-|
         )
-        
+
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         durationLabel.textColor = .white
@@ -97,11 +95,11 @@ class YPLibraryViewCell: UICollectionViewCell {
     override var isSelected: Bool {
         didSet { refreshSelection() }
     }
-    
+
     override var isHighlighted: Bool {
         didSet { refreshSelection() }
     }
-    
+
     private func refreshSelection() {
         let showOverlay = isSelected || isHighlighted
         selectionOverlay.alpha = showOverlay ? 0.6 : 0

@@ -6,8 +6,8 @@
 //  Copyright © 2017 Yummypets. All rights reserved.
 //
 
-import UIKit
 import Photos
+import UIKit
 
 struct YPAlbum {
     var thumbnail: UIImage?

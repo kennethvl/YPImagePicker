@@ -9,12 +9,11 @@
 import UIKit
 
 public struct YPFonts {
-
     /// The font used in the picker title
     public var pickerTitleFont: UIFont = .boldSystemFont(ofSize: 17)
 
     /// The font used in the warning label of the LibraryView
-    public var libaryWarningFont: UIFont = UIFont(name: "Helvetica Neue", size: 14)!
+    public var libaryWarningFont = UIFont(name: "Helvetica Neue", size: 14)!
 
     /// The font used to show the duration in the LibraryViewCell
     public var durationFont: UIFont = .systemFont(ofSize: 12)
@@ -33,7 +32,7 @@ public struct YPFonts {
 
     public var cameraTimeElapsedFont: UIFont = .monospacedDigitSystemFont(ofSize: 13, weight: .medium)
 
-    public var navigationBarTitleFont: UIFont?
+    public var navigationBarTitleFont: UIFont = .boldSystemFont(ofSize: 17)
 
     /// The font used in the UINavigationBar rightBarButtonItem
     public var rightBarButtonFont: UIFont?

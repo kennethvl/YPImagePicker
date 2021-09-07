@@ -6,21 +6,23 @@
 //  Copyright © 2018 Yummypets. All rights reserved.
 //
 
-import UIKit
 import AVFoundation
 import CoreMotion
+import UIKit
 
 /// Abstracts Low Level AVFoudation details.
 class YPVideoCaptureHelper: NSObject {
-    
-    public var isRecording: Bool { return videoOutput.isRecording }
+    public var isRecording: Bool {
+        return videoOutput.isRecording
+    }
+
     public var didCaptureVideo: ((URL) -> Void)?
     public var videoRecordingProgress: ((Float, TimeInterval) -> Void)?
-    
+
     private let session = AVCaptureSession()
     private var timer = Timer()
     private var dateVideoStarted = Date()
-    private let sessionQueue = DispatchQueue(label: "YPVideoVCSerialQueue")
+    private let sessionQueue = DispatchQueue(label: "YPVideoCaptureHelperQueue")
     private var videoInput: AVCaptureDeviceInput?
     private var videoOutput = AVCaptureMovieFileOutput()
     private var videoRecordingTimeLimit: TimeInterval = 0
@@ -29,12 +31,12 @@ class YPVideoCaptureHelper: NSObject {
     private var previewView: UIView!
     private var motionManager = CMMotionManager()
     private var initVideoZoomFactor: CGFloat = 1.0
-    
+
     // MARK: - Init
-    
+
     public func start(previewView: UIView, withVideoRecordingLimit: TimeInterval, completion: @escaping () -> Void) {
         self.previewView = previewView
-        self.videoRecordingTimeLimit = withVideoRecordingLimit
+        videoRecordingTimeLimit = withVideoRecordingLimit
         sessionQueue.async { [weak self] in
             guard let strongSelf = self else {
                 return
@@ -47,31 +49,31 @@ class YPVideoCaptureHelper: NSObject {
             })
         }
     }
-    
+
     // MARK: - Start Camera
-    
+
     public func startCamera(completion: @escaping (() -> Void)) {
         if !session.isRunning {
             sessionQueue.async { [weak self] in
                 // Re-apply session preset
-                self?.session.sessionPreset = .high
+                self?.session.sessionPreset = .photo
                 let status = AVCaptureDevice.authorizationStatus(for: AVMediaType.video)
                 switch status {
-                case .notDetermined, .restricted, .denied:
+                case .denied, .notDetermined, .restricted:
                     self?.session.stopRunning()
                 case .authorized:
                     self?.session.startRunning()
                     completion()
                     self?.tryToSetupPreview()
                 @unknown default:
-                    fatalError()
+                    ypLog("unknown default reached. Check code.")
                 }
             }
         }
     }
-    
+
     // MARK: - Flip Camera
-    
+
     public func flipCamera(completion: @escaping () -> Void) {
         sessionQueue.async { [weak self] in
             guard let strongSelf = self else {
@@ -79,17 +81,17 @@ class YPVideoCaptureHelper: NSObject {
             }
             strongSelf.session.beginConfiguration()
             strongSelf.session.resetInputs()
-            
+
             if let videoInput = strongSelf.videoInput {
                 strongSelf.videoInput = flippedDeviceInputForInput(videoInput)
             }
-            
+
             if let videoInput = strongSelf.videoInput {
                 if strongSelf.session.canAddInput(videoInput) {
                     strongSelf.session.addInput(videoInput)
                 }
             }
-            
+
             // Re Add audio recording
             for device in AVCaptureDevice.devices(for: .audio) {
                 if let audioInput = try? AVCaptureDeviceInput(device: device) {
@@ -104,51 +106,51 @@ class YPVideoCaptureHelper: NSObject {
             }
         }
     }
-    
+
     // MARK: - Focus
-    
+
     public func focus(onPoint point: CGPoint) {
         if let device = videoInput?.device {
             setFocusPointOnDevice(device: device, point: point)
         }
     }
-    
+
     // MARK: - Zoom
-    
+
     public func zoom(began: Bool, scale: CGFloat) {
-       guard let device = videoInput?.device else {
-           return
-       }
-       
-       if began {
-           initVideoZoomFactor = device.videoZoomFactor
-           return
-       }
-       
-       do {
-           try device.lockForConfiguration()
-           defer { device.unlockForConfiguration() }
-           
-           var minAvailableVideoZoomFactor: CGFloat = 1.0
-           if #available(iOS 11.0, *) {
-               minAvailableVideoZoomFactor = device.minAvailableVideoZoomFactor
-           }
-           var maxAvailableVideoZoomFactor: CGFloat = device.activeFormat.videoMaxZoomFactor
-           if #available(iOS 11.0, *) {
-               maxAvailableVideoZoomFactor = device.maxAvailableVideoZoomFactor
-           }
-           maxAvailableVideoZoomFactor = min(maxAvailableVideoZoomFactor, YPConfig.maxCameraZoomFactor)
-           
-           let desiredZoomFactor = initVideoZoomFactor * scale
-           device.videoZoomFactor = max(minAvailableVideoZoomFactor,
-										min(desiredZoomFactor, maxAvailableVideoZoomFactor))
-       } catch let error {
-          print("💩 \(error)")
-       }
+        guard let device = videoInput?.device else {
+            return
+        }
+
+        if began {
+            initVideoZoomFactor = device.videoZoomFactor
+            return
+        }
+
+        do {
+            try device.lockForConfiguration()
+            defer { device.unlockForConfiguration() }
+
+            var minAvailableVideoZoomFactor: CGFloat = 1.0
+            if #available(iOS 11.0, *) {
+                minAvailableVideoZoomFactor = device.minAvailableVideoZoomFactor
+            }
+            var maxAvailableVideoZoomFactor: CGFloat = device.activeFormat.videoMaxZoomFactor
+            if #available(iOS 11.0, *) {
+                maxAvailableVideoZoomFactor = device.maxAvailableVideoZoomFactor
+            }
+            maxAvailableVideoZoomFactor = min(maxAvailableVideoZoomFactor, YPConfig.maxCameraZoomFactor)
+
+            let desiredZoomFactor = initVideoZoomFactor * scale
+            device.videoZoomFactor = max(minAvailableVideoZoomFactor,
+                                         min(desiredZoomFactor, maxAvailableVideoZoomFactor))
+        } catch {
+            ypLog("Error: \(error)")
+        }
     }
-    
+
     // MARK: - Stop Camera
-    
+
     public func stopCamera() {
         if session.isRunning {
             sessionQueue.async { [weak self] in
@@ -156,13 +158,13 @@ class YPVideoCaptureHelper: NSObject {
             }
         }
     }
-    
+
     // MARK: - Torch
-    
+
     public func hasTorch() -> Bool {
         return videoInput?.device.hasTorch ?? false
     }
-    
+
     public func currentTorchMode() -> AVCaptureDevice.TorchMode {
         guard let device = videoInput?.device else {
             return .off
@@ -172,17 +174,16 @@ class YPVideoCaptureHelper: NSObject {
         }
         return device.torchMode
     }
-    
+
     public func toggleTorch() {
         videoInput?.device.tryToggleTorch()
     }
-    
+
     // MARK: - Recording
-    
+
     public func startRecording() {
-        
         let outputURL = YPVideoProcessor.makeVideoPathURL(temporaryFolder: true, fileName: "recordedVideoRAW")
-        
+
         checkOrientation { [weak self] orientation in
             guard let strongSelf = self else {
                 return
@@ -195,25 +196,27 @@ class YPVideoCaptureHelper: NSObject {
             }
         }
     }
-    
+
     public func stopRecording() {
         videoOutput.stopRecording()
     }
-    
+
     // Private
-    
+
     private func setupCaptureSession() {
         session.beginConfiguration()
-        let aDevice = deviceForPosition(.back)
+        let cameraPosition: AVCaptureDevice.Position = YPConfig.usesFrontCamera ? .front : .back
+        let aDevice = deviceForPosition(cameraPosition)
+
         if let d = aDevice {
             videoInput = try? AVCaptureDeviceInput(device: d)
         }
-        
+
         if let videoInput = videoInput {
             if session.canAddInput(videoInput) {
                 session.addInput(videoInput)
             }
-            
+
             // Add audio recording
             for device in AVCaptureDevice.devices(for: .audio) {
                 if let audioInput = try? AVCaptureDeviceInput(device: device) {
@@ -222,13 +225,18 @@ class YPVideoCaptureHelper: NSObject {
                     }
                 }
             }
-            
+
             let timeScale: Int32 = 30 // FPS
             let maxDuration =
-                CMTimeMakeWithSeconds(self.videoRecordingTimeLimit, preferredTimescale: timeScale)
+                CMTimeMakeWithSeconds(videoRecordingTimeLimit, preferredTimescale: timeScale)
             videoOutput.maxRecordedDuration = maxDuration
-            videoOutput.minFreeDiskSpaceLimit = 1024 * 1024
-            if YPConfig.video.fileType == .mp4 {
+            if let sizeLimit = YPConfig.video.recordingSizeLimit {
+                videoOutput.maxRecordedFileSize = sizeLimit
+            }
+            videoOutput.minFreeDiskSpaceLimit = YPConfig.video.minFreeDiskSpaceLimit
+            if YPConfig.video.fileType == .mp4,
+               YPConfig.video.recordingSizeLimit != nil
+            {
                 videoOutput.movieFragmentInterval = .invalid // Allows audio for MP4s over 10 seconds.
             }
             if session.canAddOutput(videoOutput) {
@@ -239,24 +247,30 @@ class YPVideoCaptureHelper: NSObject {
         session.commitConfiguration()
         isCaptureSessionSetup = true
     }
-    
+
     // MARK: - Recording Progress
-    
+
     @objc
     func tick() {
         let timeElapsed = Date().timeIntervalSince(dateVideoStarted)
-        let progress: Float = Float(timeElapsed) / Float(videoRecordingTimeLimit)
+        var progress: Float
+        if let recordingSizeLimit = YPConfig.video.recordingSizeLimit {
+            progress = Float(videoOutput.recordedFileSize) / Float(recordingSizeLimit)
+        } else {
+            progress = Float(timeElapsed) / Float(videoRecordingTimeLimit)
+        }
+        // VideoOutput configuration is responsible for stopping the recording. Not here.
         DispatchQueue.main.async {
             self.videoRecordingProgress?(progress, timeElapsed)
         }
     }
-    
+
     // MARK: - Orientation
 
     /// This enables to get the correct orientation even when the device is locked for orientation \o/
-    private func checkOrientation(completion: @escaping(_ orientation: AVCaptureVideoOrientation?) -> Void) {
+    private func checkOrientation(completion: @escaping (_ orientation: AVCaptureVideoOrientation?) -> Void) {
         motionManager.accelerometerUpdateInterval = 5
-        motionManager.startAccelerometerUpdates( to: OperationQueue() ) { [weak self] data, _ in
+        motionManager.startAccelerometerUpdates(to: OperationQueue()) { [weak self] data, _ in
             self?.motionManager.stopAccelerometerUpdates()
             guard let data = data else {
                 completion(nil)
@@ -272,14 +286,14 @@ class YPVideoCaptureHelper: NSObject {
     }
 
     // MARK: - Preview
-    
+
     func tryToSetupPreview() {
         if !isPreviewSetup {
             setupPreview()
             isPreviewSetup = true
         }
     }
-    
+
     func setupPreview() {
         let videoLayer = AVCaptureVideoPreviewLayer(session: session)
         DispatchQueue.main.async {
@@ -291,10 +305,10 @@ class YPVideoCaptureHelper: NSObject {
 }
 
 extension YPVideoCaptureHelper: AVCaptureFileOutputRecordingDelegate {
-    
-    public func fileOutput(_ captureOutput: AVCaptureFileOutput,
-                           didStartRecordingTo fileURL: URL,
-                           from connections: [AVCaptureConnection]) {
+    public func fileOutput(_: AVCaptureFileOutput,
+                           didStartRecordingTo _: URL,
+                           from _: [AVCaptureConnection])
+    {
         timer = Timer.scheduledTimer(timeInterval: 1,
                                      target: self,
                                      selector: #selector(tick),
@@ -302,14 +316,23 @@ extension YPVideoCaptureHelper: AVCaptureFileOutputRecordingDelegate {
                                      repeats: true)
         dateVideoStarted = Date()
     }
-    
-    public func fileOutput(_ captureOutput: AVCaptureFileOutput,
+
+    public func fileOutput(_: AVCaptureFileOutput,
                            didFinishRecordingTo outputFileURL: URL,
-                           from connections: [AVCaptureConnection],
-                           error: Error?) {
-        YPVideoProcessor.cropToSquare(filePath: outputFileURL) { [weak self] url in
-            guard let _self = self, let u = url else { return }
-            _self.didCaptureVideo?(u)
+                           from _: [AVCaptureConnection],
+                           error: Error?)
+    {
+        if let error = error {
+            ypLog("Error: \(error)")
+        }
+
+        if YPConfig.onlySquareImagesFromCamera {
+            YPVideoProcessor.cropToSquare(filePath: outputFileURL) { [weak self] url in
+                guard let _self = self, let u = url else { return }
+                _self.didCaptureVideo?(u)
+            }
+        } else {
+            didCaptureVideo?(outputFileURL)
         }
         timer.invalidate()
     }

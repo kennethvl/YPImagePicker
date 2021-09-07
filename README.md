@@ -41,8 +41,15 @@ And many more...
 
 ## Installation
 
-Drop in the Classes folder to your Xcode project.  
-You can also use CocoaPods or Carthage.
+## Experimental Swift Package Manager (SPM) Support
+A first version of SPM support is available :
+package `https://github.com/Yummypets/YPImagePicker` branch `spm`.  
+This has a minimum target iOS version of `12.0`.  
+This is an early release so be sure to thoroughly test the integration and report any issues you'd encounter.
+
+Side note:  
+Swift package manager is the future and I would strongly recommend you to migrate as soon as possible.
+Once this integration is stable, the other packager managers will be deprecated.
 
 #### Using [CocoaPods](http://cocoapods.org/)
 
@@ -248,7 +255,7 @@ picker.didFinishPicking { [unowned picker] items, cancelled in
 That's it !
 
 ## Languages
-🇺🇸 English, 🇪🇸 Spanish, 🇫🇷 French 🇷🇺 Russian, 🇵🇱 Polish, 🇳🇱 Dutch, 🇧🇷 Brazilian, 🇹🇷 Turkish, 🇸🇾 Arabic, 🇩🇪 German, 🇮🇹 Italian, 🇯🇵 Japanese, 🇨🇳 Chinese, 🇮🇩 Indonesian, 🇰🇷 Korean, 🇹🇼 Traditional Chinese（Taiwan), 🇻🇳 Vietnamese, 🇹🇭 Thai. 
+🇺🇸 English, 🇪🇸 Spanish, 🇫🇷 French 🇷🇺 Russian, 🇵🇱 Polish, 🇳🇱 Dutch, 🇧🇷 Brazilian, 🇹🇷 Turkish, 🇸🇾 Arabic, 🇩🇪 German, 🇮🇹 Italian, 🇯🇵 Japanese, 🇨🇳 Chinese, 🇮🇩 Indonesian, 🇰🇷 Korean, 🇹🇼 Traditional Chinese（Taiwan), 🇻🇳 Vietnamese, 🇹🇭 Thai, 🇨🇿 Czech. 
 
 If your language is not supported, you can still customize the wordings via the `configuration.wordings` api:
 
@@ -310,6 +317,7 @@ Original Fusuma author is [ytakz](http://ytakzk.me)
 [portellaa](https://github.com/portellaa)
 [Romixery](https://github.com/romixery)
 [shotat](https://github.com/shotat)
+[shalamowww](https://github.com/shalamowww)
 
 Special thanks to [ihtiht](https://github.com/ihtiht) for the cool looking logo!
 
@@ -376,3 +384,4 @@ See [LICENSE](LICENSE) for details.
 releases/tag/3.4.0)
 - Swift 5.0 -> version [**4.0.0**](https://github.com/Yummypets/YPImagePicker/releases/tag/4.0.0)
 - Swift 5.1 -> version [**4.1.2**](https://github.com/Yummypets/YPImagePicker/releases/tag/4.1.2)
+- Swift 5.3 -> version [**4.5.0**](https://github.com/Yummypets/YPImagePicker/releases/tag/4.5.0)

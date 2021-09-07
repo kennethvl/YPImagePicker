@@ -11,17 +11,16 @@ import Photos
 import UIKit
 
 class YPAlbumsManager {
-    
     private var cachedAlbums: [YPAlbum]?
-    
+
     func fetchAlbums() -> [YPAlbum] {
         if let cachedAlbums = cachedAlbums {
             return cachedAlbums
         }
-        
+
         var albums = [YPAlbum]()
         let options = PHFetchOptions()
-        
+
         let smartAlbumsResult = PHAssetCollection.fetchAssetCollections(with: .smartAlbum,
                                                                         subtype: .any,
                                                                         options: options)
@@ -29,7 +28,7 @@ class YPAlbumsManager {
                                                                    subtype: .any,
                                                                    options: options)
         for result in [smartAlbumsResult, albumsResult] {
-            result.enumerateObjects({ assetCollection, _, _ in
+            result.enumerateObjects { assetCollection, _, _ in
                 var album = YPAlbum()
                 album.title = assetCollection.localizedTitle ?? ""
                 album.numberOfItems = self.mediaCountFor(collection: assetCollection)
@@ -37,7 +36,7 @@ class YPAlbumsManager {
                     let r = PHAsset.fetchKeyAssets(in: assetCollection, options: nil)
                     if let first = r?.firstObject {
                         let deviceScale = UIScreen.main.scale
-                        let targetSize = CGSize(width: 78*deviceScale, height: 78*deviceScale)
+                        let targetSize = CGSize(width: 78 * deviceScale, height: 78 * deviceScale)
                         let options = PHImageRequestOptions()
                         options.isSynchronous = true
                         options.deliveryMode = .opportunistic
@@ -46,33 +45,33 @@ class YPAlbumsManager {
                                                               contentMode: .aspectFill,
                                                               options: options,
                                                               resultHandler: { image, _ in
-                                                                album.thumbnail = image
-                        })
+                                                                  album.thumbnail = image
+                                                              })
                     }
                     album.collection = assetCollection
-                    
+
                     if YPConfig.library.mediaType == .photo {
                         if !(assetCollection.assetCollectionSubtype == .smartAlbumSlomoVideos
-                            || assetCollection.assetCollectionSubtype == .smartAlbumVideos) {
+                            || assetCollection.assetCollectionSubtype == .smartAlbumVideos)
+                        {
                             albums.append(album)
                         }
                     } else {
                         albums.append(album)
                     }
                 }
-            })
+            }
         }
         cachedAlbums = albums
         return albums
     }
-    
+
     func mediaCountFor(collection: PHAssetCollection) -> Int {
         let options = PHFetchOptions()
         options.predicate = YPConfig.library.mediaType.predicate()
         let result = PHAsset.fetchAssets(in: collection, options: options)
         return result.count
     }
-    
 }
 
 extension YPlibraryMediaType {
